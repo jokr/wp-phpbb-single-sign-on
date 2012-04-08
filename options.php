@@ -1,5 +1,5 @@
 <?php
-//wpbb_get_functions_conflict(); //TEST
+
 $connect_phpbb_options = get_option('connect_phpbb_options');
 if (empty($connect_phpbb_options)) {
     $connect_phpbb_options = array('path' => '');
@@ -8,23 +8,27 @@ if (empty($connect_phpbb_options)) {
 $message ='';
 
 switch ($_POST['stage']) {
-
     //Check if there are new options set
     case 'update':
         //Processing the Wordpress Part
         //--------------------------------------------------------------------------
         $new_options = array();
-
+        
+        if(!isset($connect_phpbb_options['wpbb_dbs'])) {
+            $connect_phpbb_options['wpbb_dbs'] = false;        
+        }
+        
         foreach ($connect_phpbb_options as $key => $option) {
             $new_options[$key] = $_POST[strtolower($key)];
         }
-
+        
         update_option('connect_phpbb_options', $new_options);
         $connect_phpbb_options = $new_options;
 
         //Processing the phpbb part
         //--------------------------------------------------------------------------
         $phpbb_db_prefix = wpbb_get_phpbb_prefix();
+        
         if ($phpbb_db_prefix != '') {
             if (isset($_POST['auth_method']) && $_POST['auth_method'] != '') {
                 wpbb_set_config_value($phpbb_db_prefix, 'auth_method', $_POST['auth_method']);
@@ -107,13 +111,13 @@ switch ($_POST['stage']) {
         break;
 }
 
-
-$phpbb_db_prefix = wpbb_get_phpbb_prefix();
-if ($phpbb_db_prefix != '') {
-    $phpbb_found = true;
-} else {
-    $phpbb_found = false;
-}
+    $phpbb_db_prefix = wpbb_get_phpbb_prefix();
+    if ($phpbb_db_prefix != '') {
+        $phpbb_found = true;
+    } else {
+        $phpbb_found = false;
+    }
+    
 ?>
 <div class="wrap">
     <h2><?php _e('PHP BB Options', 'phpbb') ?></h2>
@@ -137,17 +141,24 @@ if ($phpbb_db_prefix != '') {
                     <div><small><?php _e('To PHPBB from Wordpress', 'phpbb') ?></small></div>
                 </td>
                 <?php if ($phpbb_found) { ?>
-                <th scope="row"><?php _e('Path', 'phpbb'); ?></th>
+                <th scope="row">Different DB</th>
                 <td>
-                    <input type="text" value="<?php echo wpbb_get_config_value('wpbb_path') ?>" name="wpbb_path" />
-                    <div><small><?php _e('To Wordpress from PHPBB', 'phpbb'); ?></small></div>
+                    <?php
+                        $dbs_checked = '';
+                        $dbs = $connect_phpbb_options['wpbb_dbs'];
+                        if($dbs == 'on') { 
+                          $dbs_checked = ' checked="checked"'; 
+                        }
+                    ?>
+                    <input type="checkbox" value="on" name="wpbb_dbs" <?php echo $dbs_checked; ?>  />
+                    <div><small>If you run phpBB on a differnt DB than wordpress check this</small></div>
                 </td>
                 <th scope="row"><?php _e('Enable', 'phpbb'); ?></th>
                 <td>
                     <?php
                         $wp2bb_checked = '';
                         $wp2bb = get_option('wp2bb_enabled');
-                        if(!empty($wp2bb) OR $wp2bb){ $wp2bb_checked = ' checked="checked"'; }
+                        if(!empty($wp2bb) OR $wp2bb){ $wp2bb_checked = 'checked="checked"'; }
                     ?>
                     <input type="checkbox" value="on" name="wp2bb" <?php echo $wp2bb_checked; ?> />
                     <div><small><?php _e('Enables you to publish your posts in the forum', 'phpbb'); ?></small></div>
@@ -157,6 +168,15 @@ if ($phpbb_db_prefix != '') {
             <?php if ($phpbb_found) { ?>
                 <tr valign="baseline">
                     <td>&nbsp;</td><td>&nbsp;</td>
+                    <th scope="row"><?php _e('Path', 'phpbb'); ?></th>
+                    <td>
+                        <input type="text" value="<?php echo wpbb_get_config_value('wpbb_path') ?>" name="wpbb_path" />
+                         <div><small><?php _e('To Wordpress from PHPBB', 'phpbb'); ?></small></div>
+                    </td>
+                    <td>&nbsp;</td><td>&nbsp;</td>
+                </tr>
+                <tr value="baseline">
+                    <td>&nbsp;</td><td>&nbsp;</td>
                     <th scope="row"><?php _e('Auth Method', 'phpbb') ?></th>
                     <td>
                         <select name="auth_method">
@@ -165,7 +185,6 @@ if ($phpbb_db_prefix != '') {
                         <div><small><?php _e('Auth method to use, you have to use "wpbb" to make this plugin work', 'phpbb') ?></small></div>
                     </td>
                     <td>&nbsp;</td><td>&nbsp;</td>
-                </tr>
                 <tr valign="baseline">
                     <td>&nbsp;</td><td>&nbsp;</td>
                     <th scope="row"><?php _e('ACP Reauthentication', 'phpbb') ?></th>

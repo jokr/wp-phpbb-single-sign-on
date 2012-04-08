@@ -76,26 +76,91 @@ function wpbb_get_file_versions() {
  * PHPBB config Part
  */
 
-function wpbb_get_config_value($config_name) {
-    global $wpdb;
+function wpbb_getdb() {
+    $connect_phpbb_options = get_option('connect_phpbb_options');
+    if(isset($connect_phpbb_options['wpbb_dbs']) && $connect_phpbb_options['wpbb_dbs'] == 'on') {
+        $db = new wpdb(wpbb_get_phpbb_user(), wpbb_get_phpbb_password(), wpbb_get_phpbb_dbname(),  'localhost');
+        $db->show_errors();
+        return $db;
+    } else {
+        global $wpdb;
+        return $wpdb;
+    }
+}
 
+function wpbb_get_config_value($config_name) {
+    $db = wpbb_getdb();
+    
     //Get_the phpbb prefix
     $phpbb_db_prefix = wpbb_get_phpbb_prefix();
     $config_table = $phpbb_db_prefix . 'config';
 
-    $data = $wpdb->get_var('SELECT config_value FROM ' . $config_table . ' WHERE config_name = \'' . $config_name . '\'', 0, 0);
+    $data = $db->get_var('SELECT config_value FROM ' . $config_table . ' WHERE config_name = \'' . $config_name . '\'', 0, 0);
 
     return $data;
 }
 
 function wpbb_set_config_value($prefix, $config_name, $value) {
-    global $wpdb;
+    $db = wpbb_getdb();
 
     if ($prefix != '') {
         $config_table = $prefix . 'config';
 
         $query = "UPDATE `" . $config_table . "` SET `config_value` = '" . $value . "' WHERE `config_name` = '" . $config_name . "'";
-        $wpdb->query($query);
+        $db->query($query);
+    }
+}
+
+function wpbb_get_phpbb_user() {
+    $file = wpbb_phpBB3::phpbbConfig();
+    
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        
+        preg_match('/dbuser\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $user);
+        return $user[1];
+    } else {
+        return 0;
+    }
+}
+
+function wpbb_get_phpbb_password() {
+    $file = wpbb_phpBB3::phpbbConfig();
+    
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        
+        preg_match('/dbpasswd\s{0,}=\s{0,}[\'"]([0-9A-Za-z_$]+)[\'"]/', $content, $password);
+        return $password[1];
+    } else {
+        return 0;
+    }
+}
+
+function wpbb_get_phpbb_dbname() {
+    $file = wpbb_phpBB3::phpbbConfig();
+    
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        
+        preg_match('/dbname\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $dbname);
+        return $dbname[1];
+    } else {
+        return 0;
+    }
+}
+
+function wpbb_get_phpbb_host() {
+    $file = wpbb_phpBB3::phpbbConfig();
+    
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        
+        preg_match('/dbhost\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $host);
+
+        return $host[1];
+    } else {
+        return 0;
     }
 }
 
@@ -105,7 +170,7 @@ function wpbb_get_phpbb_prefix() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
 
-        preg_match('/dbname\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $dbname);
+        
         preg_match('/table_prefix\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $table_prefix);
 
         return $table_prefix[1];
@@ -229,9 +294,7 @@ function wpbb_run_test($echo = true) {
     } else {
         $phpbb_found = false;
     }
-
-
-
+    
     /**
      * Configurations
      */
@@ -386,19 +449,19 @@ function wpbb_run_test($echo = true) {
 
     if ($echo){
         echo '
-	<table class="widefat" summary="" title="PHPBB">
-		<thead>
-		<tr>
+  <table class="widefat" summary="" title="PHPBB">
+    <thead>
+    <tr>
                         <th scope="col">&nbsp;</th>
-			<th scope="col">'.__('Recommended', 'phpbb').'</th>
-			<th scope="col">'.__('Current', 'phpbb').'</th>
-			<th scope="col">'.__('OK ?', 'phpbb').'</th>
+      <th scope="col">'.__('Recommended', 'phpbb').'</th>
+      <th scope="col">'.__('Current', 'phpbb').'</th>
+      <th scope="col">'.__('OK ?', 'phpbb').'</th>
                         <th scope="col">'.__('Action', 'phpbb').'</th>
-		</tr>
-		<tbody id="the-list">
+    </tr>
+    <tbody id="the-list">
                 '.$result.'
-		</tbody>
-	</table>
+    </tbody>
+  </table>
         ';
     }
 
