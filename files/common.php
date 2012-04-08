@@ -119,6 +119,8 @@ if (file_exists(dirname($root_path) . '/' . $wbh )) {
     //nothing found
 }
 
+header("HTTP/1.0 200 OK");
+
 //restore all vars.
 foreach ($saved_vars as $key => $val) {
     $varname = '_' . $key;
