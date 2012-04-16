@@ -1,5 +1,5 @@
 === PHPBB Single Sign On ===
-Contributors: onigoetz
+Contributors: onigoetz, jokr
 Tags: phpbb, authentication, password, login, single sign on, wrapper, connector
 Requires at least: 2.8.0
 Tested up to: 3.1.1
@@ -104,12 +104,13 @@ P.S. : WP2BB was created by Alfredo de Hoces (http://www.alfredodehoces.com/)
 == Installation ==
 
 1. Extract the archive
-1. upload the phpbb-sso directory to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Configure the path to PHPBB in the options
-1. When the path is right some fields related to phpbb will appear, fill them and save.
-1. Click on "install files" to install files.
-1. If all tests are OK you cant logout and login to test.
+2. Rename the directory it to phpbb-single-sign-on
+3. upload the phpbb-single-sign-on directory to the `/wp-content/plugins/` directory
+4. Activate the plugin through the 'Plugins' menu in WordPress
+5. Configure the path to PHPBB in the options
+6. When the path is right some fields related to phpbb will appear, fill them and save.
+7. Click on "install files" to install files.
+8. If all tests are OK you cant logout and login to test.
 
 How to configure ?
 

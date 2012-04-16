@@ -117,6 +117,13 @@ switch ($_POST['stage']) {
     } else {
         $phpbb_found = false;
     }
+		
+		$db = wpbb_getdb();
+		if(isset($db) || $db->print_error() == null) {
+				$db_connection = true;
+		} else {
+				$db_connection = false;
+		}
     
 ?>
 <div class="wrap">
@@ -165,13 +172,13 @@ switch ($_POST['stage']) {
                 </td>
                 <?php } ?>
             </tr>
-            <?php if ($phpbb_found) { ?>
+            <?php if ($phpbb_found && $db_connection) { ?>
                 <tr valign="baseline">
                     <td>&nbsp;</td><td>&nbsp;</td>
                     <th scope="row"><?php _e('Path', 'phpbb'); ?></th>
                     <td>
                         <input type="text" value="<?php echo wpbb_get_config_value('wpbb_path') ?>" name="wpbb_path" />
-                         <div><small><?php _e('To Wordpress from PHPBB', 'phpbb'); ?></small></div>
+                         <div><small><?php _e('To Wordpress from root (when in doubt just put "/"). ', 'phpbb'); ?></small></div>
                     </td>
                     <td>&nbsp;</td><td>&nbsp;</td>
                 </tr>

@@ -78,9 +78,10 @@ function wpbb_get_file_versions() {
 
 function wpbb_getdb() {
     $connect_phpbb_options = get_option('connect_phpbb_options');
+		
     if(isset($connect_phpbb_options['wpbb_dbs']) && $connect_phpbb_options['wpbb_dbs'] == 'on') {
-        $db = new wpdb(wpbb_get_phpbb_user(), wpbb_get_phpbb_password(), wpbb_get_phpbb_dbname(),  'localhost');
-        $db->show_errors();
+        $db = new wpdb(wpbb_get_phpbb_user(), wpbb_get_phpbb_password(), wpbb_get_phpbb_dbname(), 'localhost');
+        $db->hide_errors();
         return $db;
     } else {
         global $wpdb;
@@ -117,7 +118,7 @@ function wpbb_get_phpbb_user() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
         
-        preg_match('/dbuser\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $user);
+        preg_match('/dbuser\s{0,}=\s{0,}[\'"](.+)[\'"]/', $content, $user);
         return $user[1];
     } else {
         return 0;
@@ -130,7 +131,7 @@ function wpbb_get_phpbb_password() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
         
-        preg_match('/dbpasswd\s{0,}=\s{0,}[\'"]([0-9A-Za-z_$]+)[\'"]/', $content, $password);
+        preg_match('/dbpasswd\s{0,}=\s{0,}[\'"](.+)[\'"]/', $content, $password);
         return $password[1];
     } else {
         return 0;
@@ -143,7 +144,7 @@ function wpbb_get_phpbb_dbname() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
         
-        preg_match('/dbname\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $dbname);
+        preg_match('/dbname\s{0,}=\s{0,}[\'"](.+)[\'"]/', $content, $dbname);
         return $dbname[1];
     } else {
         return 0;
@@ -156,7 +157,7 @@ function wpbb_get_phpbb_host() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
         
-        preg_match('/dbhost\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $host);
+        preg_match('/dbhost\s{0,}=\s{0,}[\'"](.+)[\'"]/', $content, $host);
 
         return $host[1];
     } else {
@@ -170,7 +171,6 @@ function wpbb_get_phpbb_prefix() {
     if (file_exists($file)) {
         $content = file_get_contents($file);
 
-        
         preg_match('/table_prefix\s{0,}=\s{0,}[\'"]([0-9A-Za-z_]+)[\'"]/', $content, $table_prefix);
 
         return $table_prefix[1];
@@ -283,6 +283,7 @@ function wpbb_run_test($echo = true) {
         'common-orig' => array('state' => true, 'message' => 'Original'),
         'auth_method' => true,
         'path_var' => true,
+				'db_connection' => true,
         'posting.php' => true,
         'functions_user.php' => true,
     );
@@ -299,12 +300,11 @@ function wpbb_run_test($echo = true) {
      * Configurations
      */
 
-    $result = '<tr><th colspan="5">'.__('configuration', 'phpbb').'</th></tr>';
+    $result = '<tr><th colspan="5">'.__('Configuration', 'phpbb').'</th></tr>';
 
     ////////////////////////////////////////////////////////////////////////////
     //path_var
     
-
     $path_var = get_option('connect_phpbb_options');
     if (!(isset($path_var['path']) && $path_var['path'] != '')) {
         $error = true;
@@ -314,12 +314,31 @@ function wpbb_run_test($echo = true) {
     if($echo){
         $result .= '<tr class="alternate">
                 <td>Wordpress Path</td>
-                <th><i>Variable</i></th>
+                <td><i>Variable</i></td>
                 <td>' . $path_var['path'] . '</td>
                 <td>' . wpbb_passed_test($test['path_var']) . '</td>
                 <td><a href="#configuration" class="button" style="height:17px; margin:1px; line-height:23px;">'.__('Configure').'</a></td>
             </tr>';
     }
+		
+		 ////////////////////////////////////////////////////////////////////////////
+    //db_connection
+		
+		$db = wpbb_getdb();
+		if(!(isset($db)) || $db->print_error() != null) {
+	  		$error = true;
+				$test['db_connection'] = false;
+		}
+		
+		if($echo) {
+				$result .= '<tr>
+								<td>phpBB DB Connection</td>
+								<td><i>No errors</i></td>
+								<td>' . $db->print_error() . '</td>
+								<td>' . wpbb_passed_test($test['db_connection']) . '</td>
+								<td><a href="#configuration" class="button" style="height:17px; margin:1px; line-height:23px;">'.__('Configure').'</a></td>
+							</tr>';
+		}
 
     ////////////////////////////////////////////////////////////////////////////
     //auth_method
@@ -330,7 +349,7 @@ function wpbb_run_test($echo = true) {
     }
 
     if($echo){
-            $result .= '<tr>
+            $result .= '<tr class="alternate">
                 <td>Auth Mode</td>
                 <td>wpbb</td>
                 <td>' . $auth_method . '</td>
@@ -349,8 +368,6 @@ function wpbb_run_test($echo = true) {
         $error = true;
         $test['auth_wpbb'] = false;
     }
-
-
 
     if($echo){
         $result .= '<tr>
@@ -478,86 +495,6 @@ function wpbb_passed_test($test_result) {
         return '<span style="color:red">Error</span>';
     }
 }
-
-/*
- * Functions list Part
- */
-
-/*function wpbb_get_functions_conflict() {
-    $functions_list = wpbb_folder_function_list(ABSPATH . PHPBBPATH);
-
-    $modules_directory = str_replace('/phpbb-single-sign-on', '', dirname(__FILE__));
-
-    $modules_list = wpbb_get_modules_list($modules_directory);
-
-    foreach ($modules_list as $module) {
-        $list = wpbb_folder_function_list($modules_directory . '/' . $module . '/');
-
-        print_r(array_intersect($list, $functions_list));
-    }
-}
-
-function wpbb_get_modules_list($modules_directory) {
-    $modules_list = array();
-
-    $iterator = new DirectoryIterator($modules_directory);
-    foreach ($iterator as $file) {
-        if ($file->isDir() && !$file->isDot()) {
-            $name = $file->getFilename();
-            if ($name != 'phpbb-single-sign-on') {
-                $modules_list[] = $name;
-            }
-        }
-    }
-    return $modules_list;
-}
-
-function wpbb_folder_function_list($folder) {
-    $file_list = wpbb_get_files_list($folder);
-
-    $function_list = array();
-    foreach ($file_list as $file) {
-        $file_path = $folder . $file;
-        $function_list = array_merge($function_list, wpbb_functions_list($file_path));
-    }
-
-    $function_list = array_unique($function_list);
-
-    return $function_list;
-}
-
-function wpbb_get_files_list($directory, &$list = array(), $base = '') {
-    $iterator = new DirectoryIterator($directory);
-    foreach ($iterator as $file) {
-
-        if (!$file->isDot()) {
-            $name = $file->getFilename();
-
-            if ($file->isDir() && $name != 'cache') {
-                wpbb_get_files_list($directory . '/' . $name, &$list, $base . $name . '/');
-            } else {
-                if (strpos($name, '.php') !== false && $name != 'auth_wpbb.php' && $name != 'common-orig.php') {
-                    $list[] = $base . $name;
-                }
-            }
-        }
-    }
-    return $list;
-}
-
-function wpbb_functions_list($file) {
-    if (file_exists($file)) {
-        $content = file_get_contents($file);
-
-        preg_match_all('/function\s{1,}([0-9A-Za-z_\-]+)\s{0,}\(/', $content, $functions);
-
-        if (count($functions != 0)) {
-            return $functions[1];
-        }
-    }
-    //else
-    return array();
-}*/
 
 function wpbb_validate_user_patch($file) {
     if (file_exists($file)) {

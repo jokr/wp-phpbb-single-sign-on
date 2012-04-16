@@ -15,7 +15,6 @@ if(!defined('LOADED_WP')){
     define('LOADED_PHPBB', true);
 }
 
-
 function include_for_eval($file) {
     $file_contents = file_get_contents($file);
     $file_contents = preg_replace('/^\s*\<\?php/', '', $file_contents);
@@ -58,13 +57,11 @@ unset($include_session_contents);
 unset($include_formatting_contents);
 unset($include_constants_contents);
 
-
 //suprimme le conflit de $table_prefix
 $include_common_contents = str_replace('$table_prefix', '$dbname.".".$table_prefix2', $include_common_contents);
 
 //suprimme le conflit de make_clickable()
 $include_common_contents = str_replace('make_clickable', 'wpbb_make_clickable', $include_common_contents);
-
 
 /*
  * COOKIE
@@ -84,8 +81,9 @@ $new_get_cookie = array(
 $include_common_contents = str_replace($original_get_cookie, $new_get_cookie, $include_common_contents);
 
 //Include de la version modifiée de common.php
-eval($include_common_contents);
+$include_common_contents = str_replace('auth_.php', 'auth_wpbb.php', $include_common_contents);
 
+eval($include_common_contents);
 
 /**
  * Loads Wordpress
@@ -111,10 +109,10 @@ if (isset($config['wpbb_path'])) {
 $root_path = dirname(__FILE__);
 
 //tests if the wordpress files exist
-if (file_exists(dirname($root_path) . '/' . $wbh )) {
-    include dirname($root_path) . '/' . $wbh;
-} else if (file_exists($root_path . '/' . $wbh)) {
-    include $root_path . '/' . $wbh;
+if (file_exists(dirname($root_path) . $wbh  )) {
+    include dirname($root_path) . $wbh ;
+} else if (file_exists($root_path . $wbh)) {
+    include $root_path . $wbh;
 } else {
     //nothing found
 }
@@ -127,4 +125,3 @@ foreach ($saved_vars as $key => $val) {
     global $$varname;
     $$varname = $val;
 }
-
